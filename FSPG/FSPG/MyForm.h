@@ -26,6 +26,14 @@ namespace FSPG
         // Method to initialize all components
         void InitializeComponent(void);
 
-        void MyForm::piece_Click(Object^ sender, EventArgs^ e);
+        void piece_Click(Object^ sender, EventArgs^ e);
+
+        String^ currentTurn; // Will be "red" or "green", not set initially.
+
+        bool gameEnded = false; // Keeps track of whether the game has ended.
+
+        void CheckWinCondition();
+
+
     };
 }
