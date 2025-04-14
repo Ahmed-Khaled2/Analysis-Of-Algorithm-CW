@@ -1,3 +1,6 @@
 C:\Users\gosta\Desktop\AOA_Project\FSPG\FSPG\x64\Debug\FSPG.vcxproj.AssemblyReference.cache
 C:\Users\gosta\Desktop\AOA_Project\FSPG\FSPG\x64\Debug\FSPG.MyForm.resources
 C:\Users\gosta\Desktop\AOA_Project\FSPG\FSPG\x64\Debug\FSPG.vcxproj.GenerateResource.cache
+C:\Users\gosta\Desktop\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.vcxproj.AssemblyReference.cache
+C:\Users\gosta\Desktop\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.MyForm.resources
+C:\Users\gosta\Desktop\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.vcxproj.GenerateResource.cache

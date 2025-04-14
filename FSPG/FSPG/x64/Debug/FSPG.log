@@ -1,5 +1,7 @@
-﻿  MyForm.cpp
+﻿  GameState.cpp
   main.cpp
+  MyForm.cpp
+  .NETFramework,Version=v4.7.2.AssemblyAttributes.cpp
   Generating Code...
   GameState.obj : MSIL module encountered; incremental linking is disabled for MSIL; performing full link
-  FSPG.vcxproj -> C:\Users\gosta\Desktop\AOA_Project\FSPG\x64\Debug\FSPG.exe
+  FSPG.vcxproj -> C:\Users\gosta\Desktop\Analysis-Of-Algorithm-CW\FSPG\x64\Debug\FSPG.exe
