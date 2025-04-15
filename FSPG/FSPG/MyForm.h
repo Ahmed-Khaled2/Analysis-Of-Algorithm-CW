@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 
 namespace FSPG
 {
@@ -34,6 +35,6 @@ namespace FSPG
 
         void CheckWinCondition();
 
-
+        std::vector<std::vector<char>> GetBoardState();
     };
 }

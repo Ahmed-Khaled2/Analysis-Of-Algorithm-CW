@@ -1,4 +1,9 @@
 #include "MyForm.h"
+#include "GameSolver.h"
+#include <vector>
+#include <iostream>
+#include <string>
+#include <sstream>
 
 using namespace FSPG;
 using namespace System;
@@ -17,6 +22,9 @@ MyForm::~MyForm(void){
 
 void MyForm::InitializeComponent(void)
 {
+    System::ComponentModel::ComponentResourceManager^ resources =
+        (gcnew System::ComponentModel::ComponentResourceManager(MyForm::typeid));
+
     currentTurn = nullptr;  // Reset current turn
     gameEnded = false;      // Reset game state
 
@@ -24,8 +32,6 @@ void MyForm::InitializeComponent(void)
     this->tableLayoutPanel1 = gcnew TableLayoutPanel();
 
     // Set up a 5x5 grid.
-    this->tableLayoutPanel1->ColumnCount = 5;
-    this->tableLayoutPanel1->RowCount = 5;
     this->tableLayoutPanel1->Dock = DockStyle::Fill;
 
     for (int col = 0; col < 5; col++) {
@@ -53,7 +59,7 @@ void MyForm::InitializeComponent(void)
             // Place green pieces in the top row (row 0) and columns 1, 2, 3.
             if (r == 0 && c >= 1 && c <= 3) {
                 PictureBox^ piecePic = gcnew PictureBox();
-                piecePic->Image = Image::FromFile("C:\\Users\\hassa\\OneDrive\\Desktop\\Green.png");
+                piecePic->Image = (System::Drawing::Image^)resources->GetObject("Green");
                 piecePic->SizeMode = PictureBoxSizeMode::StretchImage;
                 piecePic->Dock = DockStyle::Fill;
                 // Use the Name property to store the piece type.
@@ -67,7 +73,7 @@ void MyForm::InitializeComponent(void)
             // Place red pieces in the first column (column 0) and rows 1, 2, 3.
             if (c == 0 && r >= 1 && r <= 3) {
                 PictureBox^ piecePic = gcnew PictureBox();
-                piecePic->Image = Image::FromFile("C:\\Users\\hassa\\OneDrive\\Desktop\\Red.png");
+                piecePic->Image = (System::Drawing::Image^)resources->GetObject("Red");
                 piecePic->SizeMode = PictureBoxSizeMode::StretchImage;
                 piecePic->Dock = DockStyle::Fill;
                 piecePic->Name = "red";
@@ -83,25 +89,22 @@ void MyForm::InitializeComponent(void)
     this->ClientSize = Drawing::Size(600, 600);
     this->Controls->Add(this->tableLayoutPanel1);
     this->Text = L"MyForm (Board with Two Pieces)";
-
-
 }
 
 void MyForm::piece_Click(Object^ sender, EventArgs^ e)
 {
     PictureBox^ piece = safe_cast<PictureBox^>(sender);
     String^ pieceType = piece->Name; // "green" or "red"
+    char LetterTurn;
 
     // If no turn has been set yet, let the first click decide the starting turn.
-    if (currentTurn == nullptr)
-    {
+    if (currentTurn == nullptr){
         currentTurn = pieceType;
         // Optionally, update UI to reflect that the starting turn is set.
     }
 
     // Only proceed if it is this piece's turn.
-    if (!pieceType->Equals(currentTurn))
-    {
+    if (!pieceType->Equals(currentTurn)){
         // Optionally, provide feedback (such as a message) that it's not this piece's turn.
         return;
     }
@@ -113,13 +116,11 @@ void MyForm::piece_Click(Object^ sender, EventArgs^ e)
 
     // Determine movement direction based on piece type.
     int dCol = 0, dRow = 0;
-    if (pieceType->Equals("green"))
-    {
+    if (pieceType->Equals("green")){
         // Green pieces only move downward.
         dRow = 1;
     }
-    else if (pieceType->Equals("red"))
-    {
+    else if (pieceType->Equals("red")){
         // Red pieces only move to the right.
         dCol = 1;
     }
@@ -129,8 +130,8 @@ void MyForm::piece_Click(Object^ sender, EventArgs^ e)
     int nextRow = curRow + dRow;
 
     // Check if the adjacent cell is within bounds.
-    if (nextCol < 0 || nextCol >= this->tableLayoutPanel1->ColumnCount ||
-        nextRow < 0 || nextRow >= this->tableLayoutPanel1->RowCount)
+    if (nextCol < 0 || nextCol >= 5 ||
+        nextRow < 0 || nextRow >= 5)
     {
         return; // Move not possible - out of bounds.
     }
@@ -153,8 +154,8 @@ void MyForm::piece_Click(Object^ sender, EventArgs^ e)
         int landingRow = nextRow + dRow;
 
         // Check if the landing cell is within bounds.
-        if (landingCol < 0 || landingCol >= this->tableLayoutPanel1->ColumnCount ||
-            landingRow < 0 || landingRow >= this->tableLayoutPanel1->RowCount)
+        if (landingCol < 0 || landingCol >= 5 ||
+            landingRow < 0 || landingRow >= 5)
         {
             return; // Cannot jump if landing cell is out of bounds.
         }
@@ -179,27 +180,34 @@ void MyForm::piece_Click(Object^ sender, EventArgs^ e)
     }
 
     // Swap the turn after a successful move.
-    if (currentTurn->Equals("red"))
+    if (currentTurn->Equals("red")) {
         currentTurn = "green";
-    else
+        LetterTurn = 'G';
+    }
+    else {
         currentTurn = "red";
+        LetterTurn = 'R';
+    }
 
     // Optionally, update any UI elements (like a label) to reflect the new turn.
+
+    GetBestMove(GetBoardState(), LetterTurn);
 }
 
-void FSPG::MyForm::CheckWinCondition()
+void MyForm::CheckWinCondition()
 {
     int greenCount = 0;
     int redCount = 0;
 
-    int totalRows = this->tableLayoutPanel1->RowCount;
-    int totalCols = this->tableLayoutPanel1->ColumnCount;
+    int totalRows = 5;
+    int totalCols = 5;
 
     for (int r = 0; r < totalRows; r++)
     {
         for (int c = 0; c < totalCols; c++)
         {
             Control^ cell = this->tableLayoutPanel1->GetControlFromPosition(c, r);
+            
             for each (Control ^ ctrl in cell->Controls)
             {
                 PictureBox^ piece = dynamic_cast<PictureBox^>(ctrl);
@@ -231,6 +239,32 @@ void FSPG::MyForm::CheckWinCondition()
     }
 }
 
+std::vector<std::vector<char>> MyForm::GetBoardState() {
+    std::vector<std::vector<char>> board(5, std::vector<char>(5, 0));
 
+    for (int r = 0; r < 5; r++) {
+        for (int c = 0; c < 5; c++) {
+            Control^ cell = this->tableLayoutPanel1->GetControlFromPosition(c, r);
+            if (cell->Controls->Count > 0) {
+                PictureBox^ piece = safe_cast<PictureBox^>(cell->Controls[0]);
+                if (piece->Name->Equals("green"))
+                    board[r][c] = 'G';
+                else if (piece->Name->Equals("red"))
+                    board[r][c] = 'R';
+            }
+            else board[r][c] = '.';
+        }
+    }
 
+    board[0][0] = '#';
+    board[0][4] = '#';
+    board[4][0] = '#';
+    board[4][4] = '#';
 
+    for (int i = 1; i <= 3; i++) {
+        board[i][4] = (board[i][4] != 'G' && board[i][4] != 'R') ? '*' : board[i][4];
+        board[4][i] = (board[4][i] != 'G' && board[4][i] != 'R') ? '*' : board[4][i];
+    }
+
+    return board;
+}
