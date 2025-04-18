@@ -1,4 +1,4 @@
-#include "MyForm.h"
+﻿#include "MyForm.h"
 #include "GameSolver.h"
 #include <vector>
 #include <iostream>
@@ -20,18 +20,14 @@ MyForm::~MyForm(void){
     }
 }
 
-void MyForm::InitializeComponent(void)
-{
+void MyForm::InitializeComponent(void){
     System::ComponentModel::ComponentResourceManager^ resources =
         (gcnew System::ComponentModel::ComponentResourceManager(MyForm::typeid));
 
-    currentTurn = nullptr;  // Reset current turn
-    gameEnded = false;      // Reset game state
+    currentTurn = nullptr;
 
     this->components = gcnew System::ComponentModel::Container();
     this->tableLayoutPanel1 = gcnew TableLayoutPanel();
-
-    // Set up a 5x5 grid.
     this->tableLayoutPanel1->Dock = DockStyle::Fill;
 
     for (int col = 0; col < 5; col++) {
@@ -39,7 +35,6 @@ void MyForm::InitializeComponent(void)
         this->tableLayoutPanel1->RowStyles->Add(gcnew RowStyle(SizeType::Percent, 20.0F));
     }
 
-    // (Optional) Define your color mapping to style the board.
     array<array<Color>^>^ colorMapping = gcnew array<array<Color>^>(5);
     colorMapping[0] = gcnew array<Color>{ Color::Gray, Color::LightGreen, Color::LightGreen, Color::LightGreen, Color::Gray };
     colorMapping[1] = gcnew array<Color>{ Color::Pink, Color::White, Color::White, Color::White, Color::Pink };
@@ -47,7 +42,6 @@ void MyForm::InitializeComponent(void)
     colorMapping[3] = gcnew array<Color>{ Color::Pink, Color::White, Color::White, Color::White, Color::Pink };
     colorMapping[4] = gcnew array<Color>{ Color::Gray, Color::LightGreen, Color::LightGreen, Color::LightGreen, Color::Gray };
 
-    // Create cells and place pieces according to new rules.
     for (int r = 0; r < 5; r++) {
         for (int c = 0; c < 5; c++) {
             Panel^ panelCell = gcnew Panel();
@@ -55,22 +49,16 @@ void MyForm::InitializeComponent(void)
             panelCell->Margin = System::Windows::Forms::Padding(0);
             panelCell->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
             panelCell->BackColor = colorMapping[r][c];
-
-            // Place green pieces in the top row (row 0) and columns 1, 2, 3.
             if (r == 0 && c >= 1 && c <= 3) {
                 PictureBox^ piecePic = gcnew PictureBox();
                 piecePic->Image = (System::Drawing::Image^)resources->GetObject("Green");
                 piecePic->SizeMode = PictureBoxSizeMode::StretchImage;
                 piecePic->Dock = DockStyle::Fill;
-                // Use the Name property to store the piece type.
                 piecePic->Name = "green";
-                // Store the grid position in the Tag.
                 piecePic->Tag = Point(c, r);
                 piecePic->Click += gcnew EventHandler(this, &MyForm::piece_Click);
                 panelCell->Controls->Add(piecePic);
             }
-
-            // Place red pieces in the first column (column 0) and rows 1, 2, 3.
             if (c == 0 && r >= 1 && r <= 3) {
                 PictureBox^ piecePic = gcnew PictureBox();
                 piecePic->Image = (System::Drawing::Image^)resources->GetObject("Red");
@@ -81,7 +69,6 @@ void MyForm::InitializeComponent(void)
                 piecePic->Click += gcnew EventHandler(this, &MyForm::piece_Click);
                 panelCell->Controls->Add(piecePic);
             }
-
             this->tableLayoutPanel1->Controls->Add(panelCell, c, r);
         }
     }
@@ -91,20 +78,19 @@ void MyForm::InitializeComponent(void)
     this->Text = L"MyForm (Board with Two Pieces)";
 }
 
-void MyForm::piece_Click(Object^ sender, EventArgs^ e)
-{
+void MyForm::piece_Click(Object^ sender, EventArgs^ e){
     PictureBox^ piece = safe_cast<PictureBox^>(sender);
     String^ pieceType = piece->Name; // "green" or "red"
     char LetterTurn;
 
     // If no turn has been set yet, let the first click decide the starting turn.
-    if (currentTurn == nullptr){
+    if (currentTurn == nullptr) {
         currentTurn = pieceType;
         // Optionally, update UI to reflect that the starting turn is set.
     }
 
     // Only proceed if it is this piece's turn.
-    if (!pieceType->Equals(currentTurn)){
+    if (!pieceType->Equals(currentTurn)) {
         // Optionally, provide feedback (such as a message) that it's not this piece's turn.
         return;
     }
@@ -116,11 +102,11 @@ void MyForm::piece_Click(Object^ sender, EventArgs^ e)
 
     // Determine movement direction based on piece type.
     int dCol = 0, dRow = 0;
-    if (pieceType->Equals("green")){
+    if (pieceType->Equals("green")) {
         // Green pieces only move downward.
         dRow = 1;
     }
-    else if (pieceType->Equals("red")){
+    else if (pieceType->Equals("red")) {
         // Red pieces only move to the right.
         dCol = 1;
     }
@@ -130,15 +116,12 @@ void MyForm::piece_Click(Object^ sender, EventArgs^ e)
     int nextRow = curRow + dRow;
 
     // Check if the adjacent cell is within bounds.
-    if (nextCol < 0 || nextCol >= 5 ||
-        nextRow < 0 || nextRow >= 5)
-    {
+    if (nextCol < 0 || nextCol >= 5 || nextRow < 0 || nextRow >= 5) {
         return; // Move not possible - out of bounds.
     }
 
     Control^ adjacentCell = this->tableLayoutPanel1->GetControlFromPosition(nextCol, nextRow);
-    if (adjacentCell->Controls->Count == 0)
-    {
+    if (adjacentCell->Controls->Count == 0){
         // The adjacent cell is empty; perform a normal move.
         Control^ currentCell = piece->Parent;
         currentCell->Controls->Remove(piece);
@@ -147,8 +130,7 @@ void MyForm::piece_Click(Object^ sender, EventArgs^ e)
 
         CheckWinCondition();
     }
-    else
-    {
+    else{
         // Attempt to jump over the piece in the adjacent cell.
         int landingCol = nextCol + dCol;
         int landingRow = nextRow + dRow;
@@ -172,8 +154,7 @@ void MyForm::piece_Click(Object^ sender, EventArgs^ e)
             // Check for winner
             CheckWinCondition();
         }
-        else
-        {
+        else{
             // Landing cell is occupied; invalid move.
             return;
         }
@@ -181,60 +162,65 @@ void MyForm::piece_Click(Object^ sender, EventArgs^ e)
 
     // Swap the turn after a successful move.
     if (currentTurn->Equals("red")) {
-        currentTurn = "green";
         LetterTurn = 'G';
     }
     else {
-        currentTurn = "red";
         LetterTurn = 'R';
     }
 
     // Optionally, update any UI elements (like a label) to reflect the new turn.
 
-    GetBestMove(GetBoardState(), LetterTurn);
+    std::vector<int> ComputerMove = GetBestMove(GetBoardState(), LetterTurn);
+    if (ComputerMove[0] == -1) {
+        std::cout << "No legal move!";
+        // skip turn
+    }
+    else {
+
+        Control^ fromCell = tableLayoutPanel1->GetControlFromPosition(ComputerMove[1], ComputerMove[0]);
+        PictureBox^ piece = safe_cast<PictureBox^>(fromCell->Controls[0]);
+        Control^ toCell = tableLayoutPanel1->GetControlFromPosition(ComputerMove[3], ComputerMove[2]);
+
+        fromCell->Controls->Remove(piece);
+        toCell->Controls->Add(piece);
+        piece->Tag = Point(ComputerMove[3], ComputerMove[2]);
+
+        CheckWinCondition();
+    }
+
+    GameState humanState{ GetBoardState(), LetterTurn };
+    std::vector<::Move> legal = getAllPossibleMoves(humanState, LetterTurn);
+
+    if (legal.empty()) {
+        String^ Color;
+        if (LetterTurn == 'G') {
+            Color = "green's";
+        }
+        else {
+            Color = "red's";
+        }
+        MessageBox::Show("No legal moves available — skipping " + Color + " turn.");
+    }
 }
 
-void MyForm::CheckWinCondition()
-{
-    int greenCount = 0;
-    int redCount = 0;
+void MyForm::CheckWinCondition(){
+    int Gcount = 0, Rcount = 0;
 
-    int totalRows = 5;
-    int totalCols = 5;
-
-    for (int r = 0; r < totalRows; r++)
-    {
-        for (int c = 0; c < totalCols; c++)
-        {
-            Control^ cell = this->tableLayoutPanel1->GetControlFromPosition(c, r);
-            
-            for each (Control ^ ctrl in cell->Controls)
-            {
-                PictureBox^ piece = dynamic_cast<PictureBox^>(ctrl);
-                if (piece != nullptr)
-                {
-                    Point pos = safe_cast<Point>(piece->Tag);
-                    int pieceCol = pos.X;
-                    int pieceRow = pos.Y;
-
-                    if (piece->Name->Equals("green") && pieceRow == totalRows - 1)
-                        greenCount++;
-
-                    if (piece->Name->Equals("red") && pieceCol == totalCols - 1)
-                        redCount++;
-                }
-            }
+    for (int i = 1; i <= 3; i++) {
+        Control^ Green = this->tableLayoutPanel1->GetControlFromPosition(i, 4);
+        Control^ Red = this->tableLayoutPanel1->GetControlFromPosition(4, i);
+        if (Green->Controls->Count > 0) {
+            Gcount++;
+        }
+        if (Red->Controls->Count > 0) {
+            Rcount++;
         }
     }
 
-    if (greenCount == 3 && !gameEnded)
-    {
-        gameEnded = true;
+    if (Gcount == 3){
         MessageBox::Show("Green wins!");
     }
-    else if (redCount == 3 && !gameEnded)
-    {
-        gameEnded = true;
+    else if (Rcount == 3){
         MessageBox::Show("Red wins!");
     }
 }
@@ -252,19 +238,10 @@ std::vector<std::vector<char>> MyForm::GetBoardState() {
                 else if (piece->Name->Equals("red"))
                     board[r][c] = 'R';
             }
-            else board[r][c] = '.';
+            else {
+                board[r][c] = '.';
+            }
         }
     }
-
-    board[0][0] = '#';
-    board[0][4] = '#';
-    board[4][0] = '#';
-    board[4][4] = '#';
-
-    for (int i = 1; i <= 3; i++) {
-        board[i][4] = (board[i][4] != 'G' && board[i][4] != 'R') ? '*' : board[i][4];
-        board[4][i] = (board[4][i] != 'G' && board[4][i] != 'R') ? '*' : board[4][i];
-    }
-
     return board;
 }
