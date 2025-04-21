@@ -1,5 +1,4 @@
-﻿// GameSolver.cpp
-#include "GameSolver.h"
+﻿#include "GameSolver.h"
 #include <iostream>
 #include <vector>
 #include <unordered_map>
@@ -7,12 +6,10 @@
 #include <limits>
 #include <algorithm>
 #include <cmath>
+#include <stack>  
 
 using namespace std;
 
-//-----------------------------------------------------------------------------
-// Encode a game state to a string (for transposition keys)
-//-----------------------------------------------------------------------------
 string encodeGameState(const GameState& s, char orig) {
     stringstream ss;
     for (auto& row : s.board)
@@ -21,9 +18,8 @@ string encodeGameState(const GameState& s, char orig) {
     return ss.str();
 }
 
-//-----------------------------------------------------------------------------
-// Basic game logic helpers
-//-----------------------------------------------------------------------------
+static stack<GameState> gameStateStack;
+
 char getOpponent(char p) {
     return (p == 'R' ? 'G' : 'R');
 }
@@ -71,6 +67,7 @@ vector<Move> getAllPossibleMoves(const GameState& s, char p) {
 }
 
 GameState applyMove(const GameState& s, const Move& m, char p) {
+    gameStateStack.push(s);
     GameState ns = s;
     ns.board[m.toRow][m.toCol] = p;
     ns.board[m.fromRow][m.fromCol] = '.';
@@ -78,9 +75,6 @@ GameState applyMove(const GameState& s, const Move& m, char p) {
     return ns;
 }
 
-//-----------------------------------------------------------------------------
-// Helper predicates for evaluation
-//-----------------------------------------------------------------------------
 static bool isJumpMove(const Move& m, char player) {
     return (player == 'R' && abs(m.toCol - m.fromCol) == 2)
         || (player == 'G' && abs(m.toRow - m.fromRow) == 2);
@@ -90,15 +84,11 @@ static bool isGoalReaching(const Move& m, char player) {
     return isInGoalZone(m.toRow, m.toCol, player);
 }
 
-//-----------------------------------------------------------------------------
-// Static evaluation: progress, goal, center, opponent threats
-//-----------------------------------------------------------------------------
 int evaluateState(const GameState& s, char player) {
     char opp = getOpponent(player);
     int score = 0;
     int n = (int)s.board.size();
 
-    // own pieces
     for (int r = 0; r < n; ++r) {
         for (int c = 0; c < n; ++c) {
             if (s.board[r][c] == player) {
@@ -108,7 +98,7 @@ int evaluateState(const GameState& s, char player) {
             }
         }
     }
-    // opponent pieces
+
     for (int r = 0; r < n; ++r) {
         for (int c = 0; c < n; ++c) {
             if (s.board[r][c] == opp) {
@@ -118,34 +108,21 @@ int evaluateState(const GameState& s, char player) {
             }
         }
     }
-    // immediate opponent jumps
-    {
-        GameState tmp = s;
-        tmp.currentPlayer = opp;
-        auto om = getAllPossibleMoves(tmp, opp);
-        for (auto& m : om)
-            if (isJumpMove(m, opp)) score -= 5;
-    }
-    // opponent goal threat
-    {
-        GameState tmp = s;
-        tmp.currentPlayer = opp;
-        auto om = getAllPossibleMoves(tmp, opp);
-        for (auto& m : om) {
-            if (isGoalReaching(m, opp)) { score -= 20; break; }
-        }
+
+    GameState tmp = s;
+    tmp.currentPlayer = opp;
+    auto om = getAllPossibleMoves(tmp, opp);
+    for (auto& m : om)
+        if (isJumpMove(m, opp)) score -= 5;
+
+    om = getAllPossibleMoves(tmp, opp);
+    for (auto& m : om) {
+        if (isGoalReaching(m, opp)) { score -= 20; break; }
     }
     return score;
 }
 
-//-----------------------------------------------------------------------------
-// Transposition table
-//-----------------------------------------------------------------------------
 static unordered_map<string, int> transTable;
-
-//-----------------------------------------------------------------------------
-// Alpha–Beta search with depth‑limit + ordering + TT
-//-----------------------------------------------------------------------------
 static int alphaBeta_impl(const GameState& state,
     int depth,
     char originalPlayer,
@@ -209,14 +186,13 @@ int alphaBeta(const GameState& state,
     int beta)
 {
     transTable.clear();
+    while (!gameStateStack.empty()) gameStateStack.pop(); 
     return alphaBeta_impl(state, depth, originalPlayer, alpha, beta);
 }
 
-//-----------------------------------------------------------------------------
-// Find best move at root
-//-----------------------------------------------------------------------------
 Move findBestMove(const GameState& state, char originalPlayer) {
     transTable.clear();
+    while (!gameStateStack.empty()) gameStateStack.pop(); 
     auto moves = getAllPossibleMoves(state, originalPlayer);
     int bestScore = numeric_limits<int>::min();
     Move bestMove{ -1,-1,-1,-1 };
@@ -236,9 +212,6 @@ Move findBestMove(const GameState& state, char originalPlayer) {
     return bestMove;
 }
 
-//-----------------------------------------------------------------------------
-// Utilities & C‑API
-//-----------------------------------------------------------------------------
 void printBoard(const vector<vector<char>>& B) {
     for (auto& row : B) {
         for (char c : row) cout << c << ' ';

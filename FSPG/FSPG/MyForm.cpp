@@ -1,7 +1,5 @@
-﻿// MyForm.cpp
-#include "MyForm.h"
+﻿#include "MyForm.h"
 #include "GameSolver.h"
-#include <Windows.h>
 #include <iostream>
 
 using namespace FSPG;
@@ -14,10 +12,6 @@ MyForm::MyForm(void)
     InitializeComponent();
     currentTurn = nullptr;
     gameEnded = false;
-
-    AllocConsole();
-    FILE* conOut = nullptr;
-    freopen_s(&conOut, "CONOUT$", "w", stdout);
     std::cout << "=== Fake Sugar Pack Console ===\n";
 }
 
@@ -97,9 +91,9 @@ void MyForm::piece_Click(Object^ sender, EventArgs^ e)
     // 1) Determine human vs AI
     PictureBox^ clicked = safe_cast<PictureBox^>(sender);
     String^ humanSide = clicked->Name;
-    char       humanChar = (humanSide == "red" ? 'R' : 'G');
+    char humanChar = (humanSide == "red" ? 'R' : 'G');
     String^ aiSide = (humanSide == "red" ? "green" : "red");
-    char       aiChar = (aiSide == "red" ? 'R' : 'G');
+    char aiChar = (aiSide == "red" ? 'R' : 'G');
 
     // 2) Init turn
     if (currentTurn == nullptr) currentTurn = humanSide;

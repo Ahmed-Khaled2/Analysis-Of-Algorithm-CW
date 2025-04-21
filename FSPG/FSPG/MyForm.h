@@ -1,6 +1,4 @@
-// MyForm.h
 #pragma once
-
 #include <vector>
 
 namespace FSPG {
@@ -17,7 +15,7 @@ namespace FSPG {
         ::System::ComponentModel::IContainer^ components;
         TableLayoutPanel^ tableLayoutPanel1;
         String^ currentTurn;
-        bool                           gameEnded;
+        bool gameEnded;
 
         void InitializeComponent(void);
         void piece_Click(Object^ sender, EventArgs^ e);
