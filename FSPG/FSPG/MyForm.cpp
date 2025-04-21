@@ -1,247 +1,216 @@
-﻿#include "MyForm.h"
+﻿// MyForm.cpp
+#include "MyForm.h"
 #include "GameSolver.h"
-#include <vector>
+#include <Windows.h>
 #include <iostream>
-#include <string>
-#include <sstream>
 
 using namespace FSPG;
 using namespace System;
 using namespace System::Windows::Forms;
 using namespace System::Drawing;
 
-MyForm::MyForm(void){
+MyForm::MyForm(void)
+{
     InitializeComponent();
-}
-
-MyForm::~MyForm(void){
-    if (components){
-        delete components;
-    }
-}
-
-void MyForm::InitializeComponent(void){
-    System::ComponentModel::ComponentResourceManager^ resources =
-        (gcnew System::ComponentModel::ComponentResourceManager(MyForm::typeid));
-
     currentTurn = nullptr;
+    gameEnded = false;
 
-    this->components = gcnew System::ComponentModel::Container();
-    this->tableLayoutPanel1 = gcnew TableLayoutPanel();
-    this->tableLayoutPanel1->Dock = DockStyle::Fill;
+    AllocConsole();
+    FILE* conOut = nullptr;
+    freopen_s(&conOut, "CONOUT$", "w", stdout);
+    std::cout << "=== Fake Sugar Pack Console ===\n";
+}
 
-    for (int col = 0; col < 5; col++) {
-        this->tableLayoutPanel1->ColumnStyles->Add(gcnew ColumnStyle(SizeType::Percent, 20.0F));
-        this->tableLayoutPanel1->RowStyles->Add(gcnew RowStyle(SizeType::Percent, 20.0F));
+MyForm::~MyForm(void)
+{
+    if (components) delete components;
+}
+
+void MyForm::InitializeComponent(void)
+{
+    components = gcnew ::System::ComponentModel::Container();
+    auto resources = gcnew ::System::ComponentModel::ComponentResourceManager(MyForm::typeid);
+
+    tableLayoutPanel1 = gcnew TableLayoutPanel();
+    tableLayoutPanel1->Dock = DockStyle::Fill;
+    tableLayoutPanel1->ColumnCount = 5;
+    tableLayoutPanel1->RowCount = 5;
+    for (int i = 0; i < 5; ++i) {
+        tableLayoutPanel1->ColumnStyles->Add(
+            gcnew ColumnStyle(SizeType::Percent, 20.0F));
+        tableLayoutPanel1->RowStyles->Add(
+            gcnew RowStyle(SizeType::Percent, 20.0F));
     }
 
-    array<array<Color>^>^ colorMapping = gcnew array<array<Color>^>(5);
-    colorMapping[0] = gcnew array<Color>{ Color::Gray, Color::LightGreen, Color::LightGreen, Color::LightGreen, Color::Gray };
-    colorMapping[1] = gcnew array<Color>{ Color::Pink, Color::White, Color::White, Color::White, Color::Pink };
-    colorMapping[2] = gcnew array<Color>{ Color::Pink, Color::White, Color::White, Color::White, Color::Pink };
-    colorMapping[3] = gcnew array<Color>{ Color::Pink, Color::White, Color::White, Color::White, Color::Pink };
-    colorMapping[4] = gcnew array<Color>{ Color::Gray, Color::LightGreen, Color::LightGreen, Color::LightGreen, Color::Gray };
+    array<array<Color>^>^ colorMap = gcnew array<array<Color>^>(5) {
+        gcnew array<Color>{ Color::Gray, Color::LightGreen, Color::LightGreen, Color::LightGreen, Color::Gray },
+            gcnew array<Color>{ Color::Pink, Color::White, Color::White, Color::White, Color::Pink },
+            gcnew array<Color>{ Color::Pink, Color::White, Color::White, Color::White, Color::Pink },
+            gcnew array<Color>{ Color::Pink, Color::White, Color::White, Color::White, Color::Pink },
+            gcnew array<Color>{ Color::Gray, Color::LightGreen, Color::LightGreen, Color::LightGreen, Color::Gray }
+    };
 
-    for (int r = 0; r < 5; r++) {
-        for (int c = 0; c < 5; c++) {
-            Panel^ panelCell = gcnew Panel();
-            panelCell->Dock = DockStyle::Fill;
-            panelCell->Margin = System::Windows::Forms::Padding(0);
-            panelCell->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
-            panelCell->BackColor = colorMapping[r][c];
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 5; ++c) {
+            Panel^ cell = gcnew Panel();
+            cell->Dock = DockStyle::Fill;
+            cell->Margin = ::System::Windows::Forms::Padding(0);
+            cell->BorderStyle = BorderStyle::FixedSingle;
+            cell->BackColor = colorMap[r][c];
+
             if (r == 0 && c >= 1 && c <= 3) {
-                PictureBox^ piecePic = gcnew PictureBox();
-                piecePic->Image = (System::Drawing::Image^)resources->GetObject("Green");
-                piecePic->SizeMode = PictureBoxSizeMode::StretchImage;
-                piecePic->Dock = DockStyle::Fill;
-                piecePic->Name = "green";
-                piecePic->Tag = Point(c, r);
-                piecePic->Click += gcnew EventHandler(this, &MyForm::piece_Click);
-                panelCell->Controls->Add(piecePic);
+                PictureBox^ pic = gcnew PictureBox();
+                pic->Image = (Image^)resources->GetObject("Green");
+                pic->SizeMode = PictureBoxSizeMode::StretchImage;
+                pic->Dock = DockStyle::Fill;
+                pic->Name = "green";
+                pic->Tag = Drawing::Point(c, r);
+                pic->Click += gcnew EventHandler(this, &MyForm::piece_Click);
+                cell->Controls->Add(pic);
             }
             if (c == 0 && r >= 1 && r <= 3) {
-                PictureBox^ piecePic = gcnew PictureBox();
-                piecePic->Image = (System::Drawing::Image^)resources->GetObject("Red");
-                piecePic->SizeMode = PictureBoxSizeMode::StretchImage;
-                piecePic->Dock = DockStyle::Fill;
-                piecePic->Name = "red";
-                piecePic->Tag = Point(c, r);
-                piecePic->Click += gcnew EventHandler(this, &MyForm::piece_Click);
-                panelCell->Controls->Add(piecePic);
+                PictureBox^ pic = gcnew PictureBox();
+                pic->Image = (Image^)resources->GetObject("Red");
+                pic->SizeMode = PictureBoxSizeMode::StretchImage;
+                pic->Dock = DockStyle::Fill;
+                pic->Name = "red";
+                pic->Tag = Drawing::Point(c, r);
+                pic->Click += gcnew EventHandler(this, &MyForm::piece_Click);
+                cell->Controls->Add(pic);
             }
-            this->tableLayoutPanel1->Controls->Add(panelCell, c, r);
+
+            tableLayoutPanel1->Controls->Add(cell);
+            tableLayoutPanel1->SetColumn(cell, c);
+            tableLayoutPanel1->SetRow(cell, r);
         }
     }
 
     this->ClientSize = Drawing::Size(600, 600);
-    this->Controls->Add(this->tableLayoutPanel1);
-    this->Text = L"MyForm (Board with Two Pieces)";
+    this->Controls->Add(tableLayoutPanel1);
+    this->Text = "Fake Sugar Pack";
 }
 
-void MyForm::piece_Click(Object^ sender, EventArgs^ e){
-    PictureBox^ piece = safe_cast<PictureBox^>(sender);
-    String^ pieceType = piece->Name; // "green" or "red"
-    char LetterTurn;
+void MyForm::piece_Click(Object^ sender, EventArgs^ e)
+{
+    if (gameEnded) return;
 
-    // If no turn has been set yet, let the first click decide the starting turn.
-    if (currentTurn == nullptr) {
-        currentTurn = pieceType;
-        // Optionally, update UI to reflect that the starting turn is set.
-    }
+    // 1) Determine human vs AI
+    PictureBox^ clicked = safe_cast<PictureBox^>(sender);
+    String^ humanSide = clicked->Name;
+    char       humanChar = (humanSide == "red" ? 'R' : 'G');
+    String^ aiSide = (humanSide == "red" ? "green" : "red");
+    char       aiChar = (aiSide == "red" ? 'R' : 'G');
 
-    // Only proceed if it is this piece's turn.
-    if (!pieceType->Equals(currentTurn)) {
-        // Optionally, provide feedback (such as a message) that it's not this piece's turn.
-        return;
-    }
+    // 2) Init turn
+    if (currentTurn == nullptr) currentTurn = humanSide;
 
-    // Retrieve the current position stored in Tag.
-    Point curPos = safe_cast<Point>(piece->Tag);
-    int curCol = curPos.X;
-    int curRow = curPos.Y;
+    // 3) Not human's turn? ignore
+    if (!currentTurn->Equals(humanSide)) return;
 
-    // Determine movement direction based on piece type.
-    int dCol = 0, dRow = 0;
-    if (pieceType->Equals("green")) {
-        // Green pieces only move downward.
-        dRow = 1;
-    }
-    else if (pieceType->Equals("red")) {
-        // Red pieces only move to the right.
-        dCol = 1;
-    }
+    // 4) Human legal moves?
+    auto board0 = GetBoardState();
+    auto hm = getAllPossibleMoves({ board0,humanChar }, humanChar);
 
-    // First, try a normal move to the adjacent cell in the allowed direction.
-    int nextCol = curCol + dCol;
-    int nextRow = curRow + dRow;
-
-    // Check if the adjacent cell is within bounds.
-    if (nextCol < 0 || nextCol >= 5 || nextRow < 0 || nextRow >= 5) {
-        return; // Move not possible - out of bounds.
-    }
-
-    Control^ adjacentCell = this->tableLayoutPanel1->GetControlFromPosition(nextCol, nextRow);
-    if (adjacentCell->Controls->Count == 0){
-        // The adjacent cell is empty; perform a normal move.
-        Control^ currentCell = piece->Parent;
-        currentCell->Controls->Remove(piece);
-        adjacentCell->Controls->Add(piece);
-        piece->Tag = Point(nextCol, nextRow);
-
-        CheckWinCondition();
-    }
-    else{
-        // Attempt to jump over the piece in the adjacent cell.
-        int landingCol = nextCol + dCol;
-        int landingRow = nextRow + dRow;
-
-        // Check if the landing cell is within bounds.
-        if (landingCol < 0 || landingCol >= 5 ||
-            landingRow < 0 || landingRow >= 5)
-        {
-            return; // Cannot jump if landing cell is out of bounds.
-        }
-
-        Control^ landingCell = this->tableLayoutPanel1->GetControlFromPosition(landingCol, landingRow);
-        if (landingCell->Controls->Count == 0)
-        {
-            // Allowed jump: the landing cell is empty.
-            Control^ currentCell = piece->Parent;
-            currentCell->Controls->Remove(piece);
-            landingCell->Controls->Add(piece);
-            piece->Tag = Point(landingCol, landingRow);
-
-            // Check for winner
-            CheckWinCondition();
-        }
-        else{
-            // Landing cell is occupied; invalid move.
-            return;
-        }
-    }
-
-    // Swap the turn after a successful move.
-    if (currentTurn->Equals("red")) {
-        LetterTurn = 'G';
+    // 5) Skip human if no moves
+    if (hm.empty()) {
+        std::cout << "[HUMAN has no legal moves -> skip]\n";
+        currentTurn = aiSide;
+        tableLayoutPanel1->Refresh();
+        Application::DoEvents();
     }
     else {
-        LetterTurn = 'R';
-    }
-
-    // Optionally, update any UI elements (like a label) to reflect the new turn.
-
-    std::vector<int> ComputerMove = GetBestMove(GetBoardState(), LetterTurn);
-    if (ComputerMove[0] == -1) {
-        std::cout << "No legal move!";
-        // skip turn
-    }
-    else {
-
-        Control^ fromCell = tableLayoutPanel1->GetControlFromPosition(ComputerMove[1], ComputerMove[0]);
-        PictureBox^ piece = safe_cast<PictureBox^>(fromCell->Controls[0]);
-        Control^ toCell = tableLayoutPanel1->GetControlFromPosition(ComputerMove[3], ComputerMove[2]);
-
-        fromCell->Controls->Remove(piece);
-        toCell->Controls->Add(piece);
-        piece->Tag = Point(ComputerMove[3], ComputerMove[2]);
-
-        CheckWinCondition();
-    }
-
-    GameState humanState{ GetBoardState(), LetterTurn };
-    std::vector<::Move> legal = getAllPossibleMoves(humanState, LetterTurn);
-
-    if (legal.empty()) {
-        String^ Color;
-        if (LetterTurn == 'G') {
-            Color = "green's";
-        }
-        else {
-            Color = "red's";
-        }
-        MessageBox::Show("No legal moves available — skipping " + Color + " turn.");
-    }
-}
-
-void MyForm::CheckWinCondition(){
-    int Gcount = 0, Rcount = 0;
-
-    for (int i = 1; i <= 3; i++) {
-        Control^ Green = this->tableLayoutPanel1->GetControlFromPosition(i, 4);
-        Control^ Red = this->tableLayoutPanel1->GetControlFromPosition(4, i);
-        if (Green->Controls->Count > 0) {
-            Gcount++;
-        }
-        if (Red->Controls->Count > 0) {
-            Rcount++;
-        }
-    }
-
-    if (Gcount == 3){
-        MessageBox::Show("Green wins!");
-    }
-    else if (Rcount == 3){
-        MessageBox::Show("Red wins!");
-    }
-}
-
-std::vector<std::vector<char>> MyForm::GetBoardState() {
-    std::vector<std::vector<char>> board(5, std::vector<char>(5, 0));
-
-    for (int r = 0; r < 5; r++) {
-        for (int c = 0; c < 5; c++) {
-            Control^ cell = this->tableLayoutPanel1->GetControlFromPosition(c, r);
-            if (cell->Controls->Count > 0) {
-                PictureBox^ piece = safe_cast<PictureBox^>(cell->Controls[0]);
-                if (piece->Name->Equals("green"))
-                    board[r][c] = 'G';
-                else if (piece->Name->Equals("red"))
-                    board[r][c] = 'R';
+        // 6) Perform human move
+        auto pt = safe_cast<Point>(clicked->Tag);
+        int col = pt.X, row = pt.Y, dcol = (humanSide == "red"), drow = (humanSide == "green");
+        bool moved = false;
+        int nc = col + dcol, nr = row + drow;
+        if (nc >= 0 && nc < 5 && nr >= 0 && nr < 5) {
+            auto adj = tableLayoutPanel1->GetControlFromPosition(nc, nr);
+            if (adj->Controls->Count == 0) {
+                auto src = clicked->Parent; src->Controls->Remove(clicked);
+                adj->Controls->Add(clicked); clicked->Tag = Point(nc, nr);
+                moved = true;
             }
             else {
-                board[r][c] = '.';
+                int lc = nc + dcol, lr = nr + drow;
+                if (lc >= 0 && lc < 5 && lr >= 0 && lr < 5) {
+                    auto land = tableLayoutPanel1->GetControlFromPosition(lc, lr);
+                    if (land->Controls->Count == 0) {
+                        auto src = clicked->Parent; src->Controls->Remove(clicked);
+                        land->Controls->Add(clicked); clicked->Tag = Point(lc, lr);
+                        moved = true;
+                    }
+                }
+            }
+        }
+        if (!moved) return;
+
+        // 7) Check human win
+        CheckWinCondition();
+        if (gameEnded) { std::cout << "[HUMAN wins!]\n"; return; }
+
+        // 8) Refresh & log
+        tableLayoutPanel1->Refresh(); Application::DoEvents();
+        std::cout << "\n[After HUMAN move]\n"; printBoard(GetBoardState());
+
+        currentTurn = aiSide;
+    }
+
+    // === AI block ===
+    tableLayoutPanel1->Refresh(); Application::DoEvents();
+    auto board1 = GetBoardState();
+    auto aiMv = GetBestMove(board1, aiChar);
+
+    if (aiMv.size() == 4 && aiMv[0] != -1) {
+        std::cout << "[AI chooses] (" << aiMv[0] << "," << aiMv[1] << ")->(" << aiMv[2] << "," << aiMv[3] << ")\n";
+        auto from = tableLayoutPanel1->GetControlFromPosition(aiMv[1], aiMv[0]);
+        if (from->Controls->Count > 0) {
+            auto pic = safe_cast<PictureBox^>(from->Controls[0]);
+            auto to = tableLayoutPanel1->GetControlFromPosition(aiMv[3], aiMv[2]);
+            from->Controls->Remove(pic); to->Controls->Add(pic);
+            pic->Tag = Point(aiMv[3], aiMv[2]);
+            tableLayoutPanel1->Refresh(); Application::DoEvents();
+        }
+    }
+    else {
+        std::cout << "[AI has no legal moves -> skip]\n";
+    }
+
+    // 12) Check AI win
+    CheckWinCondition();
+    if (gameEnded) { std::cout << "[AI wins!]\n"; return; }
+
+    // 13) Log final
+    std::cout << "[After AI move]\n"; printBoard(GetBoardState());
+
+    // 14) Back to human
+    currentTurn = humanSide;
+}
+
+void MyForm::CheckWinCondition()
+{
+    int G = 0, R = 0;
+    for (int i = 1; i <= 3; i++) {
+        auto g = tableLayoutPanel1->GetControlFromPosition(i, 4);
+        auto r = tableLayoutPanel1->GetControlFromPosition(4, i);
+        if (g->Controls->Count > 0) G++;
+        if (r->Controls->Count > 0) R++;
+    }
+    if (G == 3) { MessageBox::Show("Green wins!"); gameEnded = true; }
+    else if (R == 3) { MessageBox::Show("Red wins!"); gameEnded = true; }
+}
+
+std::vector<std::vector<char>> MyForm::GetBoardState()
+{
+    std::vector<std::vector<char>> B(5, std::vector<char>(5, '.'));
+    for (int r = 0; r < 5; r++) {
+        for (int c = 0; c < 5; c++) {
+            auto cell = tableLayoutPanel1->GetControlFromPosition(c, r);
+            if (cell->Controls->Count > 0) {
+                auto pic = safe_cast<PictureBox^>(cell->Controls[0]);
+                B[r][c] = pic->Name->Equals("green") ? 'G' : 'R';
             }
         }
     }
-    return board;
+    return B;
 }

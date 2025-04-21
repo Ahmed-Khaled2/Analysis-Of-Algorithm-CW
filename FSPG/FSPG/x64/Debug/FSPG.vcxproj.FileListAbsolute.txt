@@ -7,3 +7,7 @@ C:\Users\gosta\Desktop\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.vcxproj
 C:\Users\hassa\OneDrive\Desktop\anal of algo\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.vcxproj.AssemblyReference.cache
 C:\Users\hassa\OneDrive\Desktop\anal of algo\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.MyForm.resources
 C:\Users\hassa\OneDrive\Desktop\anal of algo\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.vcxproj.GenerateResource.cache
+C:\Algo\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.vcxproj.AssemblyReference.cache
+C:\Algo\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.vcxproj.SuggestedBindingRedirects.cache
+C:\Algo\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.MyForm.resources
+C:\Algo\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.vcxproj.GenerateResource.cache

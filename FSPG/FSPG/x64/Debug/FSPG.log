@@ -1,3 +1,6 @@
-﻿  MyForm.cpp
+﻿  GameSolver.cpp
+  main.cpp
+  MyForm.cpp
+  Generating Code...
   GameSolver.obj : MSIL module encountered; incremental linking is disabled for MSIL; performing full link
-  FSPG.vcxproj -> C:\Users\gosta\Desktop\Analysis-Of-Algorithm-CW\FSPG\x64\Debug\FSPG.exe
+  FSPG.vcxproj -> C:\Algo\Analysis-Of-Algorithm-CW\FSPG\x64\Debug\FSPG.exe
