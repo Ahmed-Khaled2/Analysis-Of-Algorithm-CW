@@ -1,4 +1,5 @@
-﻿#include "MyForm.h"
+﻿#pragma once
+#include "MyForm.h"
 #include "GameSolver.h"
 #include <iostream>
 
@@ -7,33 +8,30 @@ using namespace System;
 using namespace System::Windows::Forms;
 using namespace System::Drawing;
 
-MyForm::MyForm(void)
-{
+MyForm::MyForm(void){
     InitializeComponent();
-    currentTurn = nullptr;
-    gameEnded = false;
-    std::cout << "=== Fake Sugar Pack Console ===\n";
 }
 
-MyForm::~MyForm(void)
-{
+MyForm::~MyForm(void){
     if (components) delete components;
 }
 
-void MyForm::InitializeComponent(void)
-{
-    components = gcnew ::System::ComponentModel::Container();
-    auto resources = gcnew ::System::ComponentModel::ComponentResourceManager(MyForm::typeid);
+void MyForm::InitializeComponent(void){
+    currentTurn = nullptr;
+    gameEnded = false;
+    components = gcnew::System::ComponentModel::Container();
+    auto resources = gcnew::System::ComponentModel::ComponentResourceManager(MyForm::typeid);
 
     tableLayoutPanel1 = gcnew TableLayoutPanel();
-    tableLayoutPanel1->Dock = DockStyle::Fill;
     tableLayoutPanel1->ColumnCount = 5;
     tableLayoutPanel1->RowCount = 5;
+    tableLayoutPanel1->Dock = DockStyle::Fill;
+    tableLayoutPanel1->Margin = ::Padding(0);
+    tableLayoutPanel1->Padding = ::Padding(0);
+
     for (int i = 0; i < 5; ++i) {
-        tableLayoutPanel1->ColumnStyles->Add(
-            gcnew ColumnStyle(SizeType::Percent, 20.0F));
-        tableLayoutPanel1->RowStyles->Add(
-            gcnew RowStyle(SizeType::Percent, 20.0F));
+        tableLayoutPanel1->ColumnStyles->Add(gcnew ColumnStyle(SizeType::Percent, 20.0F));
+        tableLayoutPanel1->RowStyles->Add(gcnew RowStyle(SizeType::Percent, 20.0F));
     }
 
     array<array<Color>^>^ colorMap = gcnew array<array<Color>^>(5) {
@@ -79,41 +77,104 @@ void MyForm::InitializeComponent(void)
         }
     }
 
-    this->ClientSize = Drawing::Size(600, 600);
-    this->Controls->Add(tableLayoutPanel1);
+    Panel^ gridContainer = gcnew Panel();
+    gridContainer->Size = Drawing::Size(600, 600);
+    gridContainer->MinimumSize = Drawing::Size(600, 600);
+    gridContainer->MaximumSize = Drawing::Size(600, 600);
+    gridContainer->Dock = DockStyle::Fill;
+    gridContainer->Margin = ::Padding(0);
+    gridContainer->Padding = ::Padding(0);
+    gridContainer->Controls->Add(tableLayoutPanel1);
+
+    TableLayoutPanel^ sidebar = gcnew TableLayoutPanel();
+    sidebar->Dock = DockStyle::Fill;
+    sidebar->ColumnCount = 1;
+    sidebar->RowCount = 3;
+    sidebar->RowStyles->Add(gcnew RowStyle(SizeType::Absolute, 60));
+    sidebar->RowStyles->Add(gcnew RowStyle(SizeType::Percent, 100));  
+    sidebar->RowStyles->Add(gcnew RowStyle(SizeType::Absolute, 24)); 
+    sidebar->BackColor = Color::LightGray;
+    sidebar->Margin = ::Padding(0);
+    sidebar->Padding = ::Padding(0);
+
+    Button^ restartButton = gcnew Button();
+    restartButton->Text = "Restart Game";
+    restartButton->Dock = DockStyle::Fill;
+    restartButton->Font = gcnew System::Drawing::Font("Segoe UI", 12, FontStyle::Bold);
+    restartButton->Click += gcnew EventHandler(this, &MyForm::restartButton_Click);
+
+    Panel^ logPanel = gcnew Panel();
+    logPanel->Dock = DockStyle::Fill;
+    logPanel->AutoScroll = true;
+    logPanel->BackColor = Color::White;
+    logPanel->Height = 300;
+    logPanel->Dock = DockStyle::Top;
+
+    logLabel = gcnew Label();
+    logLabel->AutoSize = true;
+    logLabel->Font = gcnew Drawing::Font("Consolas", 10);
+    logLabel->Text = "=== Fake Sugar Pack Console ===\r\nPick any color to start the game.\n";
+    logPanel->Controls->Add(logLabel);
+    
+    statusLabel = gcnew Label();
+    statusLabel->Text = "Current Turn: None";
+    statusLabel->Dock = DockStyle::Fill;
+    statusLabel->TextAlign = ContentAlignment::MiddleLeft;
+    statusLabel->BackColor = Color::White;
+    statusLabel->Font = gcnew Drawing::Font("Segoe UI", 12, FontStyle::Regular);
+    sidebar->Controls->Add(restartButton, 0, 0);
+    sidebar->Controls->Add(logPanel, 0, 1);
+    sidebar->Controls->Add(statusLabel, 0, 2);
+    
+    TableLayoutPanel^ mainLayout = gcnew TableLayoutPanel();
+    mainLayout->Dock = DockStyle::Fill;
+    mainLayout->ColumnCount = 2;
+    mainLayout->RowCount = 1;
+    mainLayout->ColumnStyles->Add(gcnew ColumnStyle(SizeType::AutoSize));         
+    mainLayout->ColumnStyles->Add(gcnew ColumnStyle(SizeType::Percent, 100.0F)); 
+    mainLayout->Controls->Add(gridContainer, 0, 0);
+    mainLayout->Controls->Add(sidebar, 1, 0);
+
+    this->ClientSize = Drawing::Size(1000, 600);
+    this->Controls->Add(mainLayout);
     this->Text = "Fake Sugar Pack";
 }
 
-void MyForm::piece_Click(Object^ sender, EventArgs^ e)
-{
-    if (gameEnded) return;
+void MyForm::restartButton_Click(Object^ sender, EventArgs^ e) {
+    this->Controls->Clear();
+    InitializeComponent();
+}
 
-    // 1) Determine human vs AI
+void MyForm::piece_Click(Object^ sender, EventArgs^ e){
+    if (gameEnded) return;
     PictureBox^ clicked = safe_cast<PictureBox^>(sender);
     String^ humanSide = clicked->Name;
-    char humanChar = (humanSide == "red" ? 'R' : 'G');
-    String^ aiSide = (humanSide == "red" ? "green" : "red");
-    char aiChar = (aiSide == "red" ? 'R' : 'G');
+    String^ aiSide;
+    char humanChar, aiChar;
+    if (humanSide == "red") {
+        humanChar = 'R'; aiSide = "green"; aiChar = 'G';
+    }
+    else {
+        humanChar = 'G'; aiSide = "red"; aiChar = 'R';
+    }
 
-    // 2) Init turn
-    if (currentTurn == nullptr) currentTurn = humanSide;
+    if (currentTurn == nullptr) {
+        currentTurn = humanSide;
+    }
 
-    // 3) Not human's turn? ignore
-    if (!currentTurn->Equals(humanSide)) return;
+    if (!currentTurn->Equals(humanSide)) {
+        return;
+    }
 
-    // 4) Human legal moves?
     auto board0 = GetBoardState();
     auto hm = getAllPossibleMoves({ board0,humanChar }, humanChar);
 
-    // 5) Skip human if no moves
     if (hm.empty()) {
-        std::cout << "[HUMAN has no legal moves -> skip]\n";
+        logLabel->Text += "[HUMAN has no legal moves -> skip]\n";
         currentTurn = aiSide;
-        tableLayoutPanel1->Refresh();
-        Application::DoEvents();
     }
     else {
-        // 6) Perform human move
+        statusLabel->Text = String::Format("Current Turn: {0}", System::Char(humanChar));
         auto pt = safe_cast<Point>(clicked->Tag);
         int col = pt.X, row = pt.Y, dcol = (humanSide == "red"), drow = (humanSide == "green");
         bool moved = false;
@@ -137,52 +198,45 @@ void MyForm::piece_Click(Object^ sender, EventArgs^ e)
                 }
             }
         }
-        if (!moved) return;
+        if (!moved) {
+            return;
+        }
 
-        // 7) Check human win
         CheckWinCondition();
-        if (gameEnded) { std::cout << "[HUMAN wins!]\n"; return; }
-
-        // 8) Refresh & log
-        tableLayoutPanel1->Refresh(); Application::DoEvents();
-        std::cout << "\n[After HUMAN move]\n"; printBoard(GetBoardState());
-
+        if (gameEnded) {
+            logLabel->Text += "[HUMAN wins!]\n";
+            return;
+        }
         currentTurn = aiSide;
     }
 
-    // === AI block ===
-    tableLayoutPanel1->Refresh(); Application::DoEvents();
     auto board1 = GetBoardState();
     auto aiMv = GetBestMove(board1, aiChar);
 
     if (aiMv.size() == 4 && aiMv[0] != -1) {
-        std::cout << "[AI chooses] (" << aiMv[0] << "," << aiMv[1] << ")->(" << aiMv[2] << "," << aiMv[3] << ")\n";
+        logLabel->Text += String::Format("[AI chooses] ({0},{1}) -> ({2},{3})\r\n", aiMv[0], aiMv[1], aiMv[2], aiMv[3]);
         auto from = tableLayoutPanel1->GetControlFromPosition(aiMv[1], aiMv[0]);
         if (from->Controls->Count > 0) {
             auto pic = safe_cast<PictureBox^>(from->Controls[0]);
             auto to = tableLayoutPanel1->GetControlFromPosition(aiMv[3], aiMv[2]);
             from->Controls->Remove(pic); to->Controls->Add(pic);
             pic->Tag = Point(aiMv[3], aiMv[2]);
-            tableLayoutPanel1->Refresh(); Application::DoEvents();
         }
     }
     else {
-        std::cout << "[AI has no legal moves -> skip]\n";
+        logLabel->Text += "[AI has no legal moves -> skip]\n";
     }
 
-    // 12) Check AI win
     CheckWinCondition();
-    if (gameEnded) { std::cout << "[AI wins!]\n"; return; }
+    if (gameEnded) {
+        logLabel->Text += "[AI wins!]\n";
+        return;
+    }
 
-    // 13) Log final
-    std::cout << "[After AI move]\n"; printBoard(GetBoardState());
-
-    // 14) Back to human
     currentTurn = humanSide;
 }
 
-void MyForm::CheckWinCondition()
-{
+void MyForm::CheckWinCondition(){
     int G = 0, R = 0;
     for (int i = 1; i <= 3; i++) {
         auto g = tableLayoutPanel1->GetControlFromPosition(i, 4);
@@ -190,12 +244,15 @@ void MyForm::CheckWinCondition()
         if (g->Controls->Count > 0) G++;
         if (r->Controls->Count > 0) R++;
     }
-    if (G == 3) { MessageBox::Show("Green wins!"); gameEnded = true; }
-    else if (R == 3) { MessageBox::Show("Red wins!"); gameEnded = true; }
+    if (G == 3) {
+        gameEnded = true;
+    }
+    else if (R == 3) {
+        gameEnded = true;
+    }
 }
 
-std::vector<std::vector<char>> MyForm::GetBoardState()
-{
+std::vector<std::vector<char>> MyForm::GetBoardState(){
     std::vector<std::vector<char>> B(5, std::vector<char>(5, '.'));
     for (int r = 0; r < 5; r++) {
         for (int c = 0; c < 5; c++) {

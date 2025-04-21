@@ -1,8 +1,6 @@
-﻿// GameSolver.h
-#pragma once
+﻿#pragma once
 #include <vector>
 #include <string>
-#include <unordered_map>
 
 struct Move {
     int fromRow;
@@ -13,44 +11,24 @@ struct Move {
 
 struct GameState {
     std::vector<std::vector<char>> board;
-    char currentPlayer;  // 'R' or 'G'
+    char currentPlayer;
 };
 
-// Basic game logic
 std::string encodeGameState(const GameState& state, char originalPlayer);
-char        getOpponent(char player);
-bool        isInGoalZone(int row, int col, char player);
-bool        isWinningState(const GameState& state, char player);
-bool        isLosingState(const GameState& state, char player);
+char getOpponent(char player);
+bool isInGoalZone(int row, int col, char player);
+bool isWinningState(const GameState& state, char player);
+bool isLosingState(const GameState& state, char player);
 std::vector<Move> getAllPossibleMoves(const GameState& state, char player);
-GameState   applyMove(const GameState& state, const Move& move, char player);
+GameState applyMove(const GameState& state, const Move& move, char player);
 
-// Static evaluation and helpers
-int         evaluateState(const GameState& state, char player);
+int evaluateState(const GameState& state, char player);
 static bool isJumpMove(const Move& m, char player);
 static bool isGoalReaching(const Move& m, char player);
 
-// Alpha‐beta search
-int         alphaBeta(const GameState& state,
-    int depth,
-    char originalPlayer,
-    int alpha,
-    int beta);
-
-// Convenience full‐depth wrapper
+int alphaBeta(const GameState& state, int depth, char originalPlayer, int alpha, int beta);
 inline int  minimax(const GameState& state, int depth, char player) {
-    return alphaBeta(state, depth, player,
-        std::numeric_limits<int>::min(),
-        std::numeric_limits<int>::max());
+    return alphaBeta(state, depth, player, INT_MIN, INT_MAX);
 }
-
-// Top‐level move picker
-Move        findBestMove(const GameState& state, char originalPlayer);
-
-// Utilities
-void        printBoard(const std::vector<std::vector<char>>& board);
-void        printMove(const Move& mv);
-
-// C‑API for GUI
-std::vector<int> GetBestMove(std::vector<std::vector<char>> board,
-    char turn);
+Move findBestMove(const GameState& state, char originalPlayer);
+std::vector<int> GetBestMove(std::vector<std::vector<char>> board, char turn);

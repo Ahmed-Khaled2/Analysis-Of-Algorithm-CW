@@ -1,40 +1,50 @@
-﻿#include "GameSolver.h"
+﻿#pragma once
+#include "GameSolver.h"
 #include <iostream>
 #include <vector>
 #include <unordered_map>
 #include <sstream>
-#include <limits>
 #include <algorithm>
-#include <cmath>
 #include <stack>  
 
 using namespace std;
 
+static stack<GameState> gameStateStack;
+static unordered_map<string, int> transTable;
+
 string encodeGameState(const GameState& s, char orig) {
     stringstream ss;
-    for (auto& row : s.board)
-        for (char c : row) ss << c;
-    ss << s.currentPlayer << orig;
+    for (auto& row : s.board) {
+        for (char c : row) {
+            ss << c;
+        }
+        ss << s.currentPlayer << orig;
+    }
     return ss.str();
 }
-
-static stack<GameState> gameStateStack;
 
 char getOpponent(char p) {
     return (p == 'R' ? 'G' : 'R');
 }
 
 bool isInGoalZone(int r, int c, char p) {
-    if (p == 'R') return (r >= 1 && r <= 3 && c == 4);
-    else          return (r == 4 && c >= 1 && c <= 3);
+    if (p == 'R') {
+        return (r >= 1 && r <= 3 && c == 4);
+    }
+    else {
+        return (r == 4 && c >= 1 && c <= 3);
+    }
 }
 
 bool isWinningState(const GameState& s, char p) {
     int cnt = 0, n = (int)s.board.size();
-    for (int i = 0; i < n; ++i)
-        for (int j = 0; j < n; ++j)
-            if (s.board[i][j] == p && isInGoalZone(i, j, p))
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            if (s.board[i][j] == p && isInGoalZone(i, j, p)) {
                 ++cnt;
+            }
+        }
+    }
     return cnt >= 3;
 }
 
@@ -47,19 +57,27 @@ vector<Move> getAllPossibleMoves(const GameState& s, char p) {
     int n = (int)s.board.size();
     for (int r = 0; r < n; ++r) {
         for (int c = 0; c < n; ++c) {
-            if (s.board[r][c] != p) continue;
-            if (isInGoalZone(r, c, p)) continue;
+            if (s.board[r][c] != p) {
+                continue;
+            }
+            if (isInGoalZone(r, c, p)) {
+                continue;
+            }
             if (p == 'R') {
-                if (c + 1 < n && s.board[r][c + 1] == '.')
+                if (c + 1 < n && s.board[r][c + 1] == '.') {
                     moves.push_back({ r,c,r,c + 1 });
-                if (c + 2 < n && s.board[r][c + 1] == 'G' && s.board[r][c + 2] == '.')
+                }
+                if (c + 2 < n && s.board[r][c + 1] == 'G' && s.board[r][c + 2] == '.') {
                     moves.push_back({ r,c,r,c + 2 });
+                }
             }
             else {
-                if (r + 1 < n && s.board[r + 1][c] == '.')
+                if (r + 1 < n && s.board[r + 1][c] == '.') {
                     moves.push_back({ r,c,r + 1,c });
-                if (r + 2 < n && s.board[r + 1][c] == 'R' && s.board[r + 2][c] == '.')
+                }
+                if (r + 2 < n && s.board[r + 1][c] == 'R' && s.board[r + 2][c] == '.') {
                     moves.push_back({ r,c,r + 2,c });
+                }
             }
         }
     }
@@ -76,8 +94,7 @@ GameState applyMove(const GameState& s, const Move& m, char p) {
 }
 
 static bool isJumpMove(const Move& m, char player) {
-    return (player == 'R' && abs(m.toCol - m.fromCol) == 2)
-        || (player == 'G' && abs(m.toRow - m.fromRow) == 2);
+    return (player == 'R' && abs(m.toCol - m.fromCol) == 2) || (player == 'G' && abs(m.toRow - m.fromRow) == 2);
 }
 
 static bool isGoalReaching(const Move& m, char player) {
@@ -93,8 +110,12 @@ int evaluateState(const GameState& s, char player) {
         for (int c = 0; c < n; ++c) {
             if (s.board[r][c] == player) {
                 score += (player == 'R' ? c : r);
-                if (isInGoalZone(r, c, player)) score += 10;
-                if (r == 2 && c == 2) score += 2;
+                if (isInGoalZone(r, c, player)) {
+                    score += 10;
+                }
+                if (r == 2 && c == 2) {
+                    score += 2;
+                }
             }
         }
     }
@@ -103,8 +124,12 @@ int evaluateState(const GameState& s, char player) {
         for (int c = 0; c < n; ++c) {
             if (s.board[r][c] == opp) {
                 score -= (opp == 'R' ? c : r);
-                if (isInGoalZone(r, c, opp)) score -= 10;
-                if (r == 2 && c == 2) score -= 2;
+                if (isInGoalZone(r, c, opp)) {
+                    score -= 10;
+                }
+                if (r == 2 && c == 2) {
+                    score -= 2;
+                }
             }
         }
     }
@@ -112,44 +137,42 @@ int evaluateState(const GameState& s, char player) {
     GameState tmp = s;
     tmp.currentPlayer = opp;
     auto om = getAllPossibleMoves(tmp, opp);
-    for (auto& m : om)
-        if (isJumpMove(m, opp)) score -= 5;
+    for (auto& m : om) {
+        if (isJumpMove(m, opp)) {
+            score -= 5;
+        }
+    }
 
     om = getAllPossibleMoves(tmp, opp);
     for (auto& m : om) {
-        if (isGoalReaching(m, opp)) { score -= 20; break; }
+        if (isGoalReaching(m, opp)) {
+            score -= 20; break;
+        }
     }
     return score;
 }
 
-static unordered_map<string, int> transTable;
-static int alphaBeta_impl(const GameState& state,
-    int depth,
-    char originalPlayer,
-    int alpha,
-    int beta)
-{
-    if (isWinningState(state, originalPlayer))
+static int alphaBeta_impl(const GameState& state, int depth, char originalPlayer, int alpha, int beta){
+    if (isWinningState(state, originalPlayer)) {
         return 1000 - depth;
-    if (isLosingState(state, originalPlayer))
+    }
+    if (isLosingState(state, originalPlayer)) {
         return -1000 + depth;
+    }
 
     const int MAX_DEPTH = 8;
-    if (depth >= MAX_DEPTH)
+    if (depth >= MAX_DEPTH) {
         return evaluateState(state, originalPlayer);
+    }
 
-    string key = encodeGameState(state, originalPlayer)
-        + "|" + to_string(depth)
-        + "|" + to_string(alpha)
-        + "|" + to_string(beta);
+    string key = encodeGameState(state, originalPlayer) + "|" + to_string(depth) + "|" + to_string(alpha) + "|" + to_string(beta);
     auto it = transTable.find(key);
-    if (it != transTable.end())
+    if (it != transTable.end()) {
         return it->second;
+    }
 
     bool maximizing = (state.currentPlayer == originalPlayer);
-    int bestVal = maximizing
-        ? numeric_limits<int>::min()
-        : numeric_limits<int>::max();
+    int bestVal = maximizing ? numeric_limits<int>::min() : numeric_limits<int>::max();
 
     auto moves = getAllPossibleMoves(state, state.currentPlayer);
     sort(moves.begin(), moves.end(), [&](auto& a, auto& b) {
@@ -165,58 +188,59 @@ static int alphaBeta_impl(const GameState& state,
         GameState nxt = applyMove(state, mv, state.currentPlayer);
         int val = alphaBeta_impl(nxt, depth + 1, originalPlayer, alpha, beta);
         if (maximizing) {
-            if (val > bestVal) bestVal = val;
-            if (val > alpha)  alpha = val;
+            if (val > bestVal) {
+                bestVal = val;
+            }
+            if (val > alpha) {
+                alpha = val;
+            }
         }
         else {
-            if (val < bestVal) bestVal = val;
-            if (val < beta)    beta = val;
+            if (val < bestVal) {
+                bestVal = val;
+            }
+            if (val < beta) {
+                beta = val;
+            }
         }
-        if (beta <= alpha) break;
+        if (beta <= alpha) {
+            break;
+        }
     }
 
     transTable[key] = bestVal;
     return bestVal;
 }
 
-int alphaBeta(const GameState& state,
-    int depth,
-    char originalPlayer,
-    int alpha,
-    int beta)
-{
+int alphaBeta(const GameState& state, int depth, char originalPlayer, int alpha, int beta){
     transTable.clear();
-    while (!gameStateStack.empty()) gameStateStack.pop(); 
+    while (!gameStateStack.empty()) {
+        gameStateStack.pop();
+    }
     return alphaBeta_impl(state, depth, originalPlayer, alpha, beta);
 }
 
 Move findBestMove(const GameState& state, char originalPlayer) {
     transTable.clear();
-    while (!gameStateStack.empty()) gameStateStack.pop(); 
+    while (!gameStateStack.empty()) {
+        gameStateStack.pop(); 
+    }
     auto moves = getAllPossibleMoves(state, originalPlayer);
     int bestScore = numeric_limits<int>::min();
     Move bestMove{ -1,-1,-1,-1 };
 
     for (auto& mv : moves) {
         GameState nxt = applyMove(state, mv, originalPlayer);
-        if (isWinningState(nxt, originalPlayer))
+        if (isWinningState(nxt, originalPlayer)) {
             return mv;
-        int score = alphaBeta(nxt, 1, originalPlayer,
-            numeric_limits<int>::min(),
-            numeric_limits<int>::max());
+        }
+        int score = alphaBeta(nxt, 1, originalPlayer, INT_MIN, INT_MAX);
         if (score > bestScore) {
             bestScore = score;
             bestMove = mv;
         }
     }
     return bestMove;
-}
-
-void printBoard(const vector<vector<char>>& B) {
-    for (auto& row : B) {
-        for (char c : row) cout << c << ' ';
-        cout << '\n';
-    }
 }
 
 vector<int> GetBestMove(vector<vector<char>> board, char turn) {

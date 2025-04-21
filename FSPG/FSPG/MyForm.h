@@ -12,13 +12,15 @@ namespace FSPG {
     protected:
         ~MyForm();
     private:
+        System::Windows::Forms::Label^ statusLabel;
+        System::Windows::Forms::Label^ logLabel;
         ::System::ComponentModel::IContainer^ components;
         TableLayoutPanel^ tableLayoutPanel1;
         String^ currentTurn;
         bool gameEnded;
-
         void InitializeComponent(void);
         void piece_Click(Object^ sender, EventArgs^ e);
+        void restartButton_Click(Object^ sender, EventArgs^ e);
         void CheckWinCondition();
         std::vector<std::vector<char>> GetBoardState();
     };
