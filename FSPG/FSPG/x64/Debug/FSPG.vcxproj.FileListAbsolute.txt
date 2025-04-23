@@ -11,3 +11,9 @@ C:\Algo\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.vcxproj.AssemblyRefere
 C:\Algo\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.vcxproj.SuggestedBindingRedirects.cache
 C:\Algo\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.MyForm.resources
 C:\Algo\Analysis-Of-Algorithm-CW\FSPG\FSPG\x64\Debug\FSPG.vcxproj.GenerateResource.cache
+C:\Users\gosta\Desktop\New folder\Game Code\FSPG\x64\Debug\FSPG.vcxproj.AssemblyReference.cache
+C:\Users\gosta\Desktop\New folder\Game Code\FSPG\x64\Debug\FSPG.MyForm.resources
+C:\Users\gosta\Desktop\New folder\Game Code\FSPG\x64\Debug\FSPG.vcxproj.GenerateResource.cache
+C:\Users\gosta\Desktop\Game Code\FSPG\x64\Debug\FSPG.vcxproj.AssemblyReference.cache
+C:\Users\gosta\Desktop\Game Code\FSPG\x64\Debug\FSPG.MyForm.resources
+C:\Users\gosta\Desktop\Game Code\FSPG\x64\Debug\FSPG.vcxproj.GenerateResource.cache

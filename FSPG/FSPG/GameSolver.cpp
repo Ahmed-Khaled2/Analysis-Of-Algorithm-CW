@@ -10,19 +10,6 @@
 using namespace std;
 
 static stack<GameState> gameStateStack;
-static unordered_map<string, int> transTable;
-
-string encodeGameState(const GameState& s, char orig) {
-    stringstream ss;
-    for (auto& row : s.board) {
-        for (char c : row) {
-            ss << c;
-        }
-        ss << s.currentPlayer << orig;
-    }
-    return ss.str();
-}
-
 char getOpponent(char p) {
     return (p == 'R' ? 'G' : 'R');
 }
@@ -84,13 +71,11 @@ vector<Move> getAllPossibleMoves(const GameState& s, char p) {
     return moves;
 }
 
-GameState applyMove(const GameState& s, const Move& m, char p) {
-    gameStateStack.push(s);
-    GameState ns = s;
-    ns.board[m.toRow][m.toCol] = p;
-    ns.board[m.fromRow][m.fromCol] = '.';
-    ns.currentPlayer = getOpponent(p);
-    return ns;
+void applyMove(GameState& state, const Move& mv, char p) {
+    gameStateStack.push(state);
+    state.board[mv.toRow][mv.toCol] = p;
+    state.board[mv.fromRow][mv.fromCol] = '.';
+    state.currentPlayer = getOpponent(p);
 }
 
 static bool isJumpMove(const Move& m, char player) {
@@ -113,22 +98,11 @@ int evaluateState(const GameState& s, char player) {
                 if (isInGoalZone(r, c, player)) {
                     score += 10;
                 }
-                if (r == 2 && c == 2) {
-                    score += 2;
-                }
             }
-        }
-    }
-
-    for (int r = 0; r < n; ++r) {
-        for (int c = 0; c < n; ++c) {
             if (s.board[r][c] == opp) {
                 score -= (opp == 'R' ? c : r);
                 if (isInGoalZone(r, c, opp)) {
                     score -= 10;
-                }
-                if (r == 2 && c == 2) {
-                    score -= 2;
                 }
             }
         }
@@ -143,7 +117,6 @@ int evaluateState(const GameState& s, char player) {
         }
     }
 
-    om = getAllPossibleMoves(tmp, opp);
     for (auto& m : om) {
         if (isGoalReaching(m, opp)) {
             score -= 20; break;
@@ -152,89 +125,80 @@ int evaluateState(const GameState& s, char player) {
     return score;
 }
 
-static int alphaBeta_impl(const GameState& state, int depth, char originalPlayer, int alpha, int beta){
+static int backtrack_impl(GameState& state, int depth, char originalPlayer) {
+    gameStateStack.push(state);
+
     if (isWinningState(state, originalPlayer)) {
+        gameStateStack.pop();
         return 1000 - depth;
     }
     if (isLosingState(state, originalPlayer)) {
+        gameStateStack.pop();
         return -1000 + depth;
     }
 
     const int MAX_DEPTH = 8;
     if (depth >= MAX_DEPTH) {
-        return evaluateState(state, originalPlayer);
+        int score = evaluateState(state, originalPlayer);
+        gameStateStack.pop();
+        return score;
     }
-
-    string key = encodeGameState(state, originalPlayer) + "|" + to_string(depth) + "|" + to_string(alpha) + "|" + to_string(beta);
-    auto it = transTable.find(key);
-    if (it != transTable.end()) {
-        return it->second;
-    }
-
-    bool maximizing = (state.currentPlayer == originalPlayer);
-    int bestVal = maximizing ? numeric_limits<int>::min() : numeric_limits<int>::max();
 
     auto moves = getAllPossibleMoves(state, state.currentPlayer);
-    sort(moves.begin(), moves.end(), [&](auto& a, auto& b) {
-        bool ga = isGoalReaching(a, state.currentPlayer);
-        bool gb = isGoalReaching(b, state.currentPlayer);
-        if (ga != gb) return ga;
-        int da = abs(a.toRow - a.fromRow) + abs(a.toCol - a.fromCol);
-        int db = abs(b.toRow - b.fromRow) + abs(b.toCol - b.fromCol);
-        return da > db;
-        });
+    int bestVal = (state.currentPlayer == originalPlayer) ? INT_MIN : INT_MAX;
 
     for (auto& mv : moves) {
-        GameState nxt = applyMove(state, mv, state.currentPlayer);
-        int val = alphaBeta_impl(nxt, depth + 1, originalPlayer, alpha, beta);
-        if (maximizing) {
-            if (val > bestVal) {
-                bestVal = val;
-            }
-            if (val > alpha) {
-                alpha = val;
-            }
+        GameState prevState = state;
+        applyMove(prevState, mv, state.currentPlayer);
+        int val = backtrack_impl(prevState, depth + 1, originalPlayer);
+
+        state = gameStateStack.top();
+        gameStateStack.pop();
+
+        if (prevState.currentPlayer == originalPlayer) {
+            bestVal = max(bestVal, val);
         }
         else {
-            if (val < bestVal) {
-                bestVal = val;
-            }
-            if (val < beta) {
-                beta = val;
-            }
-        }
-        if (beta <= alpha) {
-            break;
+            bestVal = min(bestVal, val);
         }
     }
 
-    transTable[key] = bestVal;
+    gameStateStack.pop();
     return bestVal;
 }
 
-int alphaBeta(const GameState& state, int depth, char originalPlayer, int alpha, int beta){
-    transTable.clear();
+int backtrack(GameState& state, int depth, char originalPlayer) {
     while (!gameStateStack.empty()) {
         gameStateStack.pop();
     }
-    return alphaBeta_impl(state, depth, originalPlayer, alpha, beta);
+    return backtrack_impl(state, depth, originalPlayer);
 }
 
-Move findBestMove(const GameState& state, char originalPlayer) {
-    transTable.clear();
+Move findBestMove(const GameState& initialState, char originalPlayer) {
     while (!gameStateStack.empty()) {
-        gameStateStack.pop(); 
+        gameStateStack.pop();
     }
-    auto moves = getAllPossibleMoves(state, originalPlayer);
-    int bestScore = numeric_limits<int>::min();
+
+    GameState workingState = initialState;
+    auto moves = getAllPossibleMoves(workingState, originalPlayer);
+    int bestScore = INT_MIN;
     Move bestMove{ -1,-1,-1,-1 };
 
     for (auto& mv : moves) {
-        GameState nxt = applyMove(state, mv, originalPlayer);
-        if (isWinningState(nxt, originalPlayer)) {
+        gameStateStack.push(workingState);
+
+        applyMove(workingState, mv, originalPlayer);
+
+        if (isWinningState(workingState, originalPlayer)) {
+            workingState = gameStateStack.top();
+            gameStateStack.pop();
             return mv;
         }
-        int score = alphaBeta(nxt, 1, originalPlayer, INT_MIN, INT_MAX);
+
+        int score = backtrack_impl(workingState, 1, originalPlayer);
+        workingState = gameStateStack.top();
+        gameStateStack.pop();
+
         if (score > bestScore) {
             bestScore = score;
             bestMove = mv;
